@@ -159,8 +159,8 @@ class YoutubePlayer extends StatefulWidget {
       ProgressBarColors? progressColors,
       this.onReady,
       this.onEnded,
-        this.onExitFullScreen,
-        this.onEnterFullScreen,
+      this.onExitFullScreen,
+      this.onEnterFullScreen,
       this.liveUIColor = Colors.red,
       this.topActions,
       this.bottomActions,
@@ -248,9 +248,10 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
         if (Platform.isWindows) {
           WindowManager.instance.setFullScreen(controller.value.isFullScreen);
           WindowManager.instance.setResizable(!controller.value.isFullScreen);
-        } 
+        }
         if (controller.value.isFullScreen) {
-          SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+              overlays: SystemUiOverlay.values);
           SystemChrome.setPreferredOrientations([
             DeviceOrientation.portraitUp,
           ]);
@@ -258,7 +259,8 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
           Navigator.of(context).pop();
           widget.onExitFullScreen?.call();
         } else {
-          SystemChrome.setEnabledSystemUIOverlays([]);
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+              overlays: []);
           SystemChrome.setPreferredOrientations([
             DeviceOrientation.landscapeLeft,
             DeviceOrientation.landscapeRight,
@@ -385,7 +387,8 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
         clipBehavior: Clip.none,
         children: [
           Transform.scale(
-            scale: controller.value.isFullScreen && (Platform.isAndroid || Platform.isIOS)
+            scale: controller.value.isFullScreen &&
+                    (Platform.isAndroid || Platform.isIOS)
                 ? (1 / _aspectRatio * MediaQuery.of(context).size.width) /
                     MediaQuery.of(context).size.height
                 : 1,
@@ -464,7 +467,9 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
                                 ),
                                 RemainingDuration(),
                                 const PlaybackSpeedButton(),
-                                FullScreenButton(isSingleVideo: widget.isSinglePlayer,),
+                                FullScreenButton(
+                                  isSingleVideo: widget.isSinglePlayer,
+                                ),
                               ],
                         ),
                       ),

@@ -47,14 +47,14 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance?.addObserver(this);
-    
+    WidgetsBinding.instance.addObserver(this);
+
     if (Platform.isWindows) initPlatformState();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -63,7 +63,7 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
     await webviewController.setBackgroundColor(Colors.transparent);
     await webviewController.setPopupWindowPolicy(WebviewPopupWindowPolicy.deny);
     webviewController.webMessage.listen((event) {
-      final args = event['arg'] ?? [] ;
+      final args = event['arg'] ?? [];
       switch (event['event']) {
         case 'Ready':
           _onReady(args);
@@ -91,7 +91,8 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
 
     await webviewController.loadStringContent(player);
     controller!.updateValue(
-      controller!.value.copyWith(webViewController: AdaptiveWebviewController(webviewController)),
+      controller!.value.copyWith(
+          webViewController: AdaptiveWebviewController(webviewController)),
     );
     _onLoadStopCalled = true;
     if (_isPlayerReady) {
@@ -165,7 +166,8 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
         ),
         onWebViewCreated: (webController) {
           controller!.updateValue(
-            controller!.value.copyWith(webViewController: AdaptiveWebviewController(webController)),
+            controller!.value.copyWith(
+                webViewController: AdaptiveWebviewController(webController)),
           );
           webController
             ..addJavaScriptHandler(
@@ -269,25 +271,17 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
                     },
                     events: {
                         onReady: function(event) {
-                          ${Platform.isWindows 
-                          ? "window.chrome.webview.postMessage({'event': 'Ready'});" 
-                          : "window.flutter_inappwebview.callHandler('Ready');"}
+                          ${Platform.isWindows ? "window.chrome.webview.postMessage({'event': 'Ready'});" : "window.flutter_inappwebview.callHandler('Ready');"}
                         },
                         onStateChange: function(event) { sendPlayerStateChange(event.data); },
                         onPlaybackQualityChange: function(event) { 
-                          ${Platform.isWindows 
-                          ? "window.chrome.webview.postMessage({'event': 'PlaybackQualityChange', 'arg': [event.data]});" 
-                          : "window.flutter_inappwebview.callHandler('PlaybackQualityChange', event.data);"}
+                          ${Platform.isWindows ? "window.chrome.webview.postMessage({'event': 'PlaybackQualityChange', 'arg': [event.data]});" : "window.flutter_inappwebview.callHandler('PlaybackQualityChange', event.data);"}
                         },
                         onPlaybackRateChange: function(event) { 
-                          ${Platform.isWindows 
-                          ? "window.chrome.webview.postMessage({'event': 'PlaybackRateChange', 'arg': [event.data]});" 
-                          : "window.flutter_inappwebview.callHandler('PlaybackRateChange', event.data);"}
+                          ${Platform.isWindows ? "window.chrome.webview.postMessage({'event': 'PlaybackRateChange', 'arg': [event.data]});" : "window.flutter_inappwebview.callHandler('PlaybackRateChange', event.data);"}
                         },
                         onError: function(error) { 
-                          ${Platform.isWindows 
-                          ? "window.chrome.webview.postMessage({'event': 'Errors', 'arg': [error.data]});" 
-                          : "window.flutter_inappwebview.callHandler('Errors', error.data);"}
+                          ${Platform.isWindows ? "window.chrome.webview.postMessage({'event': 'Errors', 'arg': [error.data]});" : "window.flutter_inappwebview.callHandler('Errors', error.data);"}
                         }
                     },
                 });
@@ -295,9 +289,7 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
 
             function sendPlayerStateChange(playerState) {
                 clearTimeout(timerId);
-                ${Platform.isWindows 
-                ? "window.chrome.webview.postMessage({'event': 'StateChange', 'arg': [playerState]});" 
-                : "window.flutter_inappwebview.callHandler('StateChange', playerState);"}
+                ${Platform.isWindows ? "window.chrome.webview.postMessage({'event': 'StateChange', 'arg': [playerState]});" : "window.flutter_inappwebview.callHandler('StateChange', playerState);"}
                 if (playerState == 1) {
                     startSendCurrentTimeInterval();
                     sendVideoData(player);
@@ -311,16 +303,12 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
                     'author': player.getVideoData().author,
                     'videoId': player.getVideoData().video_id
                 };
-                ${Platform.isWindows 
-                ? "window.chrome.webview.postMessage({'event': 'VideoData', 'arg': [videoData]});" 
-                : "window.flutter_inappwebview.callHandler('VideoData', videoData);"}
+                ${Platform.isWindows ? "window.chrome.webview.postMessage({'event': 'VideoData', 'arg': [videoData]});" : "window.flutter_inappwebview.callHandler('VideoData', videoData);"}
             }
 
             function startSendCurrentTimeInterval() {
                 timerId = setInterval(function () {
-                  ${Platform.isWindows 
-                ? "window.chrome.webview.postMessage({'event': 'VideoTime', 'arg': [player.getCurrentTime(), player.getVideoLoadedFraction()]});" 
-                : "window.flutter_inappwebview.callHandler('VideoTime', player.getCurrentTime(), player.getVideoLoadedFraction());"}
+                  ${Platform.isWindows ? "window.chrome.webview.postMessage({'event': 'VideoTime', 'arg': [player.getCurrentTime(), player.getVideoLoadedFraction()]});" : "window.flutter_inappwebview.callHandler('VideoTime', player.getCurrentTime(), player.getVideoLoadedFraction());"}
                 }, 100);
             }
 
@@ -423,11 +411,13 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
         content: Text('WebView has requested permission \'$kind\''),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(context, WebviewPermissionDecision.deny),
+            onPressed: () =>
+                Navigator.pop(context, WebviewPermissionDecision.deny),
             child: const Text('Deny'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, WebviewPermissionDecision.allow),
+            onPressed: () =>
+                Navigator.pop(context, WebviewPermissionDecision.allow),
             child: const Text('Allow'),
           ),
         ],
@@ -522,7 +512,8 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
 
   _onVideoData(List args) {
     controller!.updateValue(
-      controller!.value.copyWith(metaData: YoutubeMetaData.fromRawData(args.first)),
+      controller!.value
+          .copyWith(metaData: YoutubeMetaData.fromRawData(args.first)),
     );
   }
 
