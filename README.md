@@ -113,11 +113,13 @@ YoutubeValueBuilder(
                     ? Icons.pause
                     : Icons.play_arrow,
          ),
-         onPressed: () {
-          value.playerState == PlayerState.playing
-            ? context.ytController.pause()
-            : context.ytController.play();
-         },
+         onPressed: value.isReady
+            ? () {
+                  value.playerState == PlayerState.playing
+                    ? context.ytController.pauseVideo()
+                    : context.ytController.playVideo();
+                 }
+            : null,
       );
    },
 );
