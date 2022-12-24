@@ -30,7 +30,7 @@ class YoutubePlayerScaffold extends StatefulWidget {
       DeviceOrientation.portraitDown,
     ],
     this.enableFullScreenOnVerticalDrag = true,
-    this.gestureRecognizers,
+    this.gestureRecognizers = const <Factory<OneSequenceGestureRecognizer>>{},
     this.backgroundColor,
     this.userAgent,
   });
@@ -66,7 +66,7 @@ class YoutubePlayerScaffold extends StatefulWidget {
   /// Which gestures should be consumed by the youtube player.
   ///
   /// This property is ignored in web.
-  final Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
+  final Set<Factory<OneSequenceGestureRecognizer>> gestureRecognizers;
 
   /// The background color of the [WebView].
   final Color? backgroundColor;
