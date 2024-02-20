@@ -11,9 +11,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_inappwebview: ^5.7.2+3
   webview_windows: ^0.2.2
   window_manager: ^0.2.7
+  flutter_inappwebview: ^6.0.0
 
 dev_dependencies:
   flutter_test:
