@@ -1,4 +1,7 @@
-## 9.0.0-beta.0
+## 9.0.1
+* Fixes issue with fullscreen pop.
+
+## 9.0.0
 * Bumps `flutter_inappwebview` to latest version.
 
 ## 8.1.2
