@@ -67,7 +67,7 @@ class _YoutubePlayerBuilderState extends State<YoutubePlayerBuilder>
 
   @override
   Widget build(BuildContext context) {
-    final double height = MediaQuery.of(context).size.height;
+    final height = MediaQuery.sizeOf(context).height;
 
     final player = Container(
       key: playerKey,
