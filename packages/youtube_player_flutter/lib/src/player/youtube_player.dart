@@ -2,25 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:window_manager/window_manager.dart';
-import 'package:youtube_player_flutter/src/player/adaptive_webview_controller.dart';
 import 'package:youtube_player_flutter/src/player/fullscreen_youtube_player.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../utils/errors.dart';
-import '../utils/youtube_meta_data.dart';
-import '../utils/youtube_player_controller.dart';
-import '../utils/youtube_player_flags.dart';
-import '../widgets/widgets.dart';
-import 'fullscreen_youtube_player.dart';
 import 'raw_youtube_player.dart';
 
 /// A widget to play or stream YouTube videos using the official [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference).
@@ -69,6 +57,8 @@ class YoutubePlayer extends StatefulWidget {
     this.thumbnail,
     this.showVideoProgressIndicator = false,
     this.isSinglePlayer = true,
+    this.onEnterFullScreen,
+    this.onExitFullScreen,
   })  : progressColors = progressColors ?? const ProgressBarColors(),
         progressIndicatorColor = progressIndicatorColor ?? Colors.red;
 

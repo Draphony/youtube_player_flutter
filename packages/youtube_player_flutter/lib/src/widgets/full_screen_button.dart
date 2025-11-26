@@ -18,8 +18,6 @@ class FullScreenButton extends StatefulWidget {
 
   /// Overrides the default [YoutubePlayerController].
   final YoutubePlayerController? controller;
-  // isSingleVideo:  Is display single video
-  final bool isSingleVideo;
 
   /// Defines color of the button.
   final Color color;
@@ -71,8 +69,7 @@ class _FullScreenButtonState extends State<FullScreenButton> {
             : Icons.fullscreen,
         color: widget.color,
       ),
-      onPressed: () =>
-          _controller.toggleFullScreenMode(isSingleVideo: widget.isSingleVideo),
+      onPressed: () => _controller.toggleFullScreenMode(),
     );
   }
 }

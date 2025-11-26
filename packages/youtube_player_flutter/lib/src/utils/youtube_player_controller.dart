@@ -3,15 +3,13 @@
 // found in the LICENSE file.
 
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import '../enums/playback_rate.dart';
 import '../enums/player_state.dart';
-import '../player/adaptive_webview_controller.dart';
 import '../utils/youtube_meta_data.dart';
 import '../widgets/progress_bar.dart';
 import 'youtube_player_flags.dart';
@@ -75,7 +73,7 @@ class YoutubePlayerValue {
   final int errorCode;
 
   /// Reports the [WebViewController].
-  final AdaptiveWebviewController? webViewController;
+  final InAppWebViewController? webViewController;
 
   /// Returns true is player has errors.
   bool get hasError => errorCode != 0;
@@ -180,7 +178,7 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
     if (value.isReady) {
       value.webViewController?.evaluateJavascript(source: methodString);
     } else {
-      print('The controller is not ready for method $methodString calls.');
+      log('The controller is not ready for method calls.');
     }
   }
 
@@ -303,18 +301,6 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
       updateValue(value.copyWith(toggleFullScreen: true));
     }
   }
-
-  // void toggleFullScreenMode() {
-  //   updateValue(value.copyWith(isFullScreen: !value.isFullScreen));
-  //   if (value.isFullScreen) {
-  //     SystemChrome.setPreferredOrientations([
-  //       DeviceOrientation.landscapeLeft,
-  //       DeviceOrientation.landscapeRight,
-  //     ]);
-  //   } else {
-  //     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  //   }
-  // }
 
   /// MetaData for the currently loaded or cued video.
   YoutubeMetaData get metadata => value.metaData;
