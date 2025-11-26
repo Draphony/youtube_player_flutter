@@ -168,7 +168,7 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
   }) : super(YoutubePlayerValue());
 
   /// Finds [YoutubePlayerController] in the provided context.
-  YoutubePlayerController? of(BuildContext context) {
+  static YoutubePlayerController? of(BuildContext context) {
     return context
         .dependOnInheritedWidgetOfExactType<InheritedYoutubePlayer>()
         ?.controller;
