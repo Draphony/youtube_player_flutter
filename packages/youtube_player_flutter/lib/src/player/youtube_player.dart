@@ -8,10 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:youtube_player_flutter/src/player/adaptive_webview_controller.dart';
+import 'package:youtube_player_flutter/src/player/fullscreen_youtube_player.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
-import '../enums/thumbnail_quality.dart';
 import '../utils/errors.dart';
 import '../utils/youtube_meta_data.dart';
 import '../utils/youtube_player_controller.dart';
@@ -47,8 +50,27 @@ import 'raw_youtube_player.dart';
 /// ```
 ///
 class YoutubePlayer extends StatefulWidget {
-  /// Sets [Key] as an identification to underlying web view associated to the player.
-  final Key? key;
+  /// Creates [YoutubePlayer] widget.
+  const YoutubePlayer({
+    super.key,
+    required this.controller,
+    this.width,
+    this.aspectRatio = 16 / 9,
+    this.controlsTimeOut = const Duration(seconds: 3),
+    this.bufferIndicator,
+    Color? progressIndicatorColor,
+    ProgressBarColors? progressColors,
+    this.onReady,
+    this.onEnded,
+    this.liveUIColor = Colors.red,
+    this.topActions,
+    this.bottomActions,
+    this.actionsPadding = const EdgeInsets.all(8.0),
+    this.thumbnail,
+    this.showVideoProgressIndicator = false,
+    this.isSinglePlayer = true,
+  })  : progressColors = progressColors ?? const ProgressBarColors(),
+        progressIndicatorColor = progressIndicatorColor ?? Colors.red;
 
   /// A [YoutubePlayerController] to control the player.
   final YoutubePlayerController controller;
@@ -147,30 +169,6 @@ class YoutubePlayer extends StatefulWidget {
   /// isSinglePlayer: true if there is one player in screen. It will decide which method of fullscreen is used
   final bool isSinglePlayer;
 
-  /// Creates [YoutubePlayer] widget.
-  const YoutubePlayer(
-      {this.key,
-      required this.controller,
-      this.width,
-      this.aspectRatio = 16 / 9,
-      this.controlsTimeOut = const Duration(seconds: 3),
-      this.bufferIndicator,
-      Color? progressIndicatorColor,
-      ProgressBarColors? progressColors,
-      this.onReady,
-      this.onEnded,
-        this.onExitFullScreen,
-        this.onEnterFullScreen,
-      this.liveUIColor = Colors.red,
-      this.topActions,
-      this.bottomActions,
-      this.actionsPadding = const EdgeInsets.all(8.0),
-      this.thumbnail,
-      this.showVideoProgressIndicator = false,
-      this.isSinglePlayer = true})
-      : progressColors = progressColors ?? const ProgressBarColors(),
-        progressIndicatorColor = progressIndicatorColor ?? Colors.red;
-
   /// Converts fully qualified YouTube Url to video id.
   ///
   /// If videoId is passed as url then no conversion is done.
@@ -181,6 +179,10 @@ class YoutubePlayer extends StatefulWidget {
     for (var exp in [
       RegExp(
           r"^https:\/\/(?:www\.|m\.)?youtube\.com\/watch\?v=([_\-a-zA-Z0-9]{11}).*$"),
+      RegExp(
+          r"^https:\/\/(?:music\.)?youtube\.com\/watch\?v=([_\-a-zA-Z0-9]{11}).*$"),
+      RegExp(
+          r"^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([_\-a-zA-Z0-9]{11}).*$"),
       RegExp(
           r"^https:\/\/(?:www\.|m\.)?youtube(?:-nocookie)?\.com\/embed\/([_\-a-zA-Z0-9]{11}).*$"),
       RegExp(r"^https:\/\/youtu\.be\/([_\-a-zA-Z0-9]{11}).*$")
@@ -203,12 +205,12 @@ class YoutubePlayer extends StatefulWidget {
           : 'https://i3.ytimg.com/vi/$videoId/$quality.jpg';
 
   @override
-  _YoutubePlayerState createState() => _YoutubePlayerState();
+  State<YoutubePlayer> createState() => _YoutubePlayerState();
 }
 
 class _YoutubePlayerState extends State<YoutubePlayer> {
   late YoutubePlayerController controller;
-  late AdaptiveWebviewController? _cachedWebController;
+  late InAppWebViewController? _cachedWebController;
   late double _aspectRatio;
   bool _initialLoad = true;
 
@@ -245,28 +247,19 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
           controller.value
               .copyWith(toggleFullScreen: false, isControlsVisible: false),
         );
-        if (Platform.isWindows) {
-          WindowManager.instance.setFullScreen(controller.value.isFullScreen);
-          WindowManager.instance.setResizable(!controller.value.isFullScreen);
-        } 
         if (controller.value.isFullScreen) {
-          SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+              overlays: SystemUiOverlay.values);
           SystemChrome.setPreferredOrientations([
             DeviceOrientation.portraitUp,
           ]);
-          // Navigator.of(context, rootNavigator: true).pop();
-          Navigator.of(context).pop();
-          widget.onExitFullScreen?.call();
+          Navigator.of(context, rootNavigator: true).pop();
         } else {
-          SystemChrome.setEnabledSystemUIOverlays([]);
-          SystemChrome.setPreferredOrientations([
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ]);
-          widget.onEnterFullScreen?.call();
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+              overlays: []);
           controller.pause();
-          var _cachedPosition = controller.value.position;
-          var _videoId = controller.metadata.videoId;
+          var cachedPosition = controller.value.position;
+          var videoId = controller.metadata.videoId;
           _cachedWebController = controller.value.webViewController;
           controller.reset();
 
@@ -279,7 +272,7 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
             controlsTimeOut: widget.controlsTimeOut,
             liveUIColor: widget.liveUIColor,
             onReady: () {
-              controller.load(_videoId, startAt: _cachedPosition.inSeconds);
+              controller.load(videoId, startAt: cachedPosition.inSeconds);
               controller.play();
             },
             progressColors: widget.progressColors,
@@ -287,13 +280,13 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
             topActions: widget.topActions,
           );
 
-          _cachedPosition = controller.value.position;
+          cachedPosition = controller.value.position;
           controller
             ..updateValue(
               controller.value
                   .copyWith(webViewController: _cachedWebController),
             )
-            ..seekTo(_cachedPosition);
+            ..seekTo(cachedPosition);
           Future.delayed(const Duration(seconds: 2), () => controller.play());
         }
       }
@@ -384,30 +377,21 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
         fit: StackFit.expand,
         clipBehavior: Clip.none,
         children: [
-          Transform.scale(
-            scale: controller.value.isFullScreen && (Platform.isAndroid || Platform.isIOS)
-                ? (1 / _aspectRatio * MediaQuery.of(context).size.width) /
-                    MediaQuery.of(context).size.height
-                : 1,
-            child: RawYoutubePlayer(
-              key: widget.key,
-              onEnded: (YoutubeMetaData metaData) {
-                if (controller.flags.loop) {
-                  controller.load(controller.metadata.videoId,
-                      startAt: controller.flags.startAt,
-                      endAt: controller.flags.endAt);
-                }
+          RawYoutubePlayer(
+            key: widget.key,
+            onEnded: (YoutubeMetaData metaData) {
+              if (controller.flags.loop) {
+                controller.load(controller.metadata.videoId,
+                    startAt: controller.flags.startAt,
+                    endAt: controller.flags.endAt);
+              }
 
-                widget.onEnded?.call(metaData);
-              },
-            ),
+              widget.onEnded?.call(metaData);
+            },
           ),
           if (!controller.flags.hideThumbnail)
-            AnimatedOpacity(
-              opacity: controller.value.isPlaying ? 0 : 1,
-              duration: const Duration(milliseconds: 300),
-              child: widget.thumbnail ?? _thumbnail,
-            ),
+            if (controller.value.playerState != PlayerState.playing)
+              widget.thumbnail ?? _thumbnail,
           if (!controller.value.isFullScreen &&
               !controller.flags.hideControls &&
               controller.value.position > const Duration(milliseconds: 100) &&
@@ -456,15 +440,15 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
                           children: widget.bottomActions ??
                               [
                                 const SizedBox(width: 14.0),
-                                CurrentPosition(),
+                                const CurrentPosition(),
                                 const SizedBox(width: 8.0),
                                 ProgressBar(
                                   isExpanded: true,
                                   colors: widget.progressColors,
                                 ),
-                                RemainingDuration(),
+                                const RemainingDuration(),
                                 const PlaybackSpeedButton(),
-                                FullScreenButton(isSingleVideo: widget.isSinglePlayer,),
+                                const FullScreenButton(),
                               ],
                         ),
                       ),
@@ -490,9 +474,7 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
             ),
           ],
           if (!controller.flags.hideControls)
-            Center(
-              child: PlayPauseButton(),
-            ),
+            const Center(child: PlayPauseButton()),
           if (controller.value.hasError) errorWidget,
         ],
       ),

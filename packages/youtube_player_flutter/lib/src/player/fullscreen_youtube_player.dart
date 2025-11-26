@@ -12,6 +12,7 @@ import '../utils/youtube_player_controller.dart';
 import '../widgets/widgets.dart';
 
 var controllerProvider;
+
 /// Shows [YoutubePlayer] in fullScreen landscape mode.
 Future<void> showFullScreenYoutubePlayer({
   required BuildContext context,
@@ -26,7 +27,6 @@ Future<void> showFullScreenYoutubePlayer({
   ProgressBarColors? progressColors,
   Widget? thumbnail,
 }) async {
-
   final TransitionRoute<Null> route = PageRouteBuilder<Null>(
     pageBuilder: _fullScreenRoutePageBuilder,
   );
@@ -48,20 +48,15 @@ Future<void> showFullScreenYoutubePlayer({
   ]);
 
   await Navigator.of(context, rootNavigator: true).push(route);
-
-
 }
 
 Widget _fullScreenRoutePageBuilder(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-
-    ) {
-
-    return _defaultRoutePageBuilder(
-        context, animation, secondaryAnimation, controllerProvider);
-
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+) {
+  return _defaultRoutePageBuilder(
+      context, animation, secondaryAnimation, controllerProvider);
 }
 
 AnimatedWidget _defaultRoutePageBuilder(
@@ -78,9 +73,7 @@ AnimatedWidget _defaultRoutePageBuilder(
 }
 
 Widget _buildFullScreenVideo(
-    BuildContext context,
-    Animation<double> animation,
-    var controllerProvider) {
+    BuildContext context, Animation<double> animation, var controllerProvider) {
   return Scaffold(
     resizeToAvoidBottomInset: false,
     body: Container(
@@ -129,8 +122,8 @@ class _FullScreenYoutubePlayer extends StatefulWidget {
   /// {@macro youtube_player_flutter.thumbnailUrl}
   final Widget? thumbnail;
 
-  _FullScreenYoutubePlayer({
-    Key? key,
+  const _FullScreenYoutubePlayer({
+    super.key,
     required this.controller,
     this.controlsTimeOut = const Duration(seconds: 3),
     this.bufferIndicator,
@@ -142,7 +135,7 @@ class _FullScreenYoutubePlayer extends StatefulWidget {
     this.bottomActions,
     this.actionsPadding = const EdgeInsets.all(8.0),
     this.thumbnail,
-  }) : super(key: key);
+  });
 
   @override
   _FullScreenYoutubePlayerState createState() =>
@@ -170,33 +163,28 @@ class _FullScreenYoutubePlayerState extends State<_FullScreenYoutubePlayer> {
   @override
   void initState() {
     super.initState();
-    SchedulerBinding.instance!.addPostFrameCallback(
-      (_) {
-        widget.controller.updateValue(
-          widget.controller.value.copyWith(isFullScreen: true),
-        );
-        SystemChrome.setEnabledSystemUIOverlays([]);
-        SystemChrome.setPreferredOrientations([
-          DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight,
-        ]);
-      }
-    );
-
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      widget.controller.updateValue(
+        widget.controller.value.copyWith(isFullScreen: true),
+      );
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    });
   }
 
   @override
   void dispose() {
-    SchedulerBinding.instance!.addPostFrameCallback(
-      (_) { widget.controller.updateValue(
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      widget.controller.updateValue(
         widget.controller.value.copyWith(isFullScreen: false),
       );
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-      SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
-      }
-    );
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+          overlays: SystemUiOverlay.values);
+    });
     super.dispose();
   }
 }
-
-

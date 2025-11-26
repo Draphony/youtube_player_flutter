@@ -1,7 +1,5 @@
 import 'dart:io';
-import 'dart:ui' show window;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -60,21 +58,22 @@ void main() {
 
   testWidgets('Create Youtube Player', (WidgetTester tester) async {
     provideMockedNetworkImages(() async {
-      var _controller = createController();
+      final controller = createController();
 
-      await tester.pumpWidget(buildPlayer(controller: _controller));
+      await tester.pumpWidget(buildPlayer(controller: controller));
     });
   });
 }
 
 class TestApp extends StatelessWidget {
-  final Widget child;
-  final TextDirection textDirection;
-
-  TestApp({
+  const TestApp({
+    super.key,
     this.textDirection = TextDirection.ltr,
     required this.child,
   });
+
+  final Widget child;
+  final TextDirection textDirection;
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +84,7 @@ class TestApp extends StatelessWidget {
         DefaultMaterialLocalizations.delegate,
       ],
       child: MediaQuery(
-        data: MediaQueryData.fromWindow(window),
+        data: MediaQueryData.fromView(View.of(context)),
         child: Directionality(
           textDirection: textDirection,
           child: child,
@@ -95,7 +94,7 @@ class TestApp extends StatelessWidget {
   }
 }
 
-R provideMockedNetworkImages<R>(R body()) {
+R provideMockedNetworkImages<R>(R Function() body) {
   return HttpOverrides.runZoned(
     body,
     createHttpClient: (_) => _createMockImageHttpClient(_, _transparentImage),
@@ -112,32 +111,39 @@ class MockHttpHeaders extends Mock implements HttpHeaders {}
 
 // Returns a mock HTTP client that responds with an image to all requests.
 MockHttpClient _createMockImageHttpClient(
-    SecurityContext? _, List<int> imageBytes) {
+  SecurityContext? _,
+  List<int> imageBytes,
+) {
   final client = MockHttpClient();
   final request = MockHttpClientRequest();
   final response = MockHttpClientResponse();
   final headers = MockHttpHeaders();
 
-  registerFallbackValue<Uri>(Uri());
-  when(() => client.getUrl(any<Uri>()))
-      .thenAnswer((_) => Future<HttpClientRequest>.value(request));
+  registerFallbackValue(Uri());
+  when(() => client.getUrl(any<Uri>())).thenAnswer(
+    (_) => Future<HttpClientRequest>.value(request),
+  );
   when(() => request.headers).thenReturn(headers);
-  when(request.close)
-      .thenAnswer((_) => Future<HttpClientResponse>.value(response));
+  when(request.close).thenAnswer(
+    (_) => Future<HttpClientResponse>.value(response),
+  );
   when(() => response.contentLength).thenReturn(_transparentImage.length);
   when(() => response.statusCode).thenReturn(HttpStatus.ok);
   when(() => response.listen(any())).thenAnswer((Invocation invocation) {
     final void Function(List<int>) onData = invocation.positionalArguments[0];
     final void Function() onDone = invocation.namedArguments[#onDone];
-    final void Function(Object, [StackTrace]) onError =
-        invocation.namedArguments[#onError];
+    final void Function(
+      Object, [
+      StackTrace,
+    ]) onError = invocation.namedArguments[#onError];
     final bool cancelOnError = invocation.namedArguments[#cancelOnError];
 
     return Stream<List<int>>.fromIterable(<List<int>>[imageBytes]).listen(
-        onData,
-        onDone: onDone,
-        onError: onError,
-        cancelOnError: cancelOnError);
+      onData,
+      onDone: onDone,
+      onError: onError,
+      cancelOnError: cancelOnError,
+    );
   });
   return client;
 }

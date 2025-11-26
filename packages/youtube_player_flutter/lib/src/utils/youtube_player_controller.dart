@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -35,7 +36,7 @@ class YoutubePlayerValue {
     this.webViewController,
     this.isDragging = false,
     this.metaData = const YoutubeMetaData(),
-    this.toggleFullScreen=false
+    this.toggleFullScreen = false,
   });
 
   /// Returns true when the player is ready to play videos.
@@ -106,29 +107,28 @@ class YoutubePlayerValue {
     double? playbackRate,
     String? playbackQuality,
     int? errorCode,
-    AdaptiveWebviewController? webViewController,
+    InAppWebViewController? webViewController,
     bool? isDragging,
     YoutubeMetaData? metaData,
-    bool? toggleFullScreen
+    bool? toggleFullScreen,
   }) {
     return YoutubePlayerValue(
-      isReady: isReady ?? this.isReady,
-      isControlsVisible: isControlsVisible ?? this.isControlsVisible,
-      hasPlayed: hasPlayed ?? this.hasPlayed,
-      position: position ?? this.position,
-      buffered: buffered ?? this.buffered,
-      isPlaying: isPlaying ?? this.isPlaying,
-      isFullScreen: isFullScreen ?? this.isFullScreen,
-      volume: volume ?? this.volume,
-      playerState: playerState ?? this.playerState,
-      playbackRate: playbackRate ?? this.playbackRate,
-      playbackQuality: playbackQuality ?? this.playbackQuality,
-      errorCode: errorCode ?? this.errorCode,
-      webViewController: webViewController ?? this.webViewController,
-      isDragging: isDragging ?? this.isDragging,
-      metaData: metaData ?? this.metaData,
-        toggleFullScreen:toggleFullScreen ?? this.toggleFullScreen
-    );
+        isReady: isReady ?? this.isReady,
+        isControlsVisible: isControlsVisible ?? this.isControlsVisible,
+        hasPlayed: hasPlayed ?? this.hasPlayed,
+        position: position ?? this.position,
+        buffered: buffered ?? this.buffered,
+        isPlaying: isPlaying ?? this.isPlaying,
+        isFullScreen: isFullScreen ?? this.isFullScreen,
+        volume: volume ?? this.volume,
+        playerState: playerState ?? this.playerState,
+        playbackRate: playbackRate ?? this.playbackRate,
+        playbackQuality: playbackQuality ?? this.playbackQuality,
+        errorCode: errorCode ?? this.errorCode,
+        webViewController: webViewController ?? this.webViewController,
+        isDragging: isDragging ?? this.isDragging,
+        metaData: metaData ?? this.metaData,
+        toggleFullScreen: toggleFullScreen ?? this.toggleFullScreen);
   }
 
   @override
@@ -170,13 +170,13 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
   }) : super(YoutubePlayerValue());
 
   /// Finds [YoutubePlayerController] in the provided context.
-  static YoutubePlayerController? of(BuildContext context) {
+  YoutubePlayerController? of(BuildContext context) {
     return context
         .dependOnInheritedWidgetOfExactType<InheritedYoutubePlayer>()
         ?.controller;
   }
 
-  _callMethod(String methodString) {
+  void _callMethod(String methodString) {
     if (value.isReady) {
       value.webViewController?.evaluateJavascript(source: methodString);
     } else {
@@ -184,8 +184,8 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
     }
   }
 
-  // ignore: use_setters_to_change_properties
   /// Updates the old [YoutubePlayerValue] with new one provided.
+  // ignore: use_setters_to_change_properties
   void updateValue(YoutubePlayerValue newValue) => value = newValue;
 
   /// Plays the video.
@@ -259,7 +259,8 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
   /// if the seconds parameter specifies a time outside of the currently buffered video data.
   /// Default allowSeekAhead = true
   void seekTo(Duration position, {bool allowSeekAhead = true}) {
-    _callMethod('seekTo(${position.inSeconds},$allowSeekAhead)');
+    pause();
+    _callMethod('seekTo(${position.inMilliseconds / 1000},$allowSeekAhead)');
     play();
     updateValue(value.copyWith(position: position));
   }
@@ -290,20 +291,14 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
   void toggleFullScreenMode({bool isSingleVideo = true}) {
     if (isSingleVideo) {
       updateValue(value.copyWith(isFullScreen: !value.isFullScreen));
-        if (Platform.isWindows) {
-          WindowManager.instance.setFullScreen(value.isFullScreen);
-          WindowManager.instance.setResizable(!value.isFullScreen);
-        } 
-        if (value.isFullScreen) {
-          SystemChrome.setEnabledSystemUIOverlays([]);
-          SystemChrome.setPreferredOrientations([
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ]);
-        } else {
-          SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
-          SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-        }
+      if (value.isFullScreen) {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      } else {
+        SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      }
     } else {
       updateValue(value.copyWith(toggleFullScreen: true));
     }
@@ -346,21 +341,28 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
           metaData: const YoutubeMetaData(),
         ),
       );
+
+  @override
+  void dispose() {
+    value.webViewController?.dispose();
+    super.dispose();
+  }
 }
 
 /// An inherited widget to provide [YoutubePlayerController] to it's descendants.
 class InheritedYoutubePlayer extends InheritedWidget {
   /// Creates [InheritedYoutubePlayer]
   const InheritedYoutubePlayer({
-    Key? key,
+    super.key,
     required this.controller,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   /// A [YoutubePlayerController] which controls the player.
   final YoutubePlayerController controller;
 
   @override
-  bool updateShouldNotify(InheritedYoutubePlayer oldPlayer) =>
-      oldPlayer.controller.hashCode != controller.hashCode;
+  bool updateShouldNotify(InheritedYoutubePlayer oldWidget) {
+    return oldWidget.controller.hashCode != controller.hashCode;
+  }
 }
