@@ -20,23 +20,24 @@ import 'youtube_player_flags.dart';
 class YoutubePlayerValue {
   /// The duration, current position, buffering state, error state and settings
   /// of a [YoutubePlayerController].
-  YoutubePlayerValue(
-      {this.isReady = false,
-      this.isControlsVisible = false,
-      this.hasPlayed = false,
-      this.position = const Duration(),
-      this.buffered = 0.0,
-      this.isPlaying = false,
-      this.isFullScreen = false,
-      this.volume = 100,
-      this.playerState = PlayerState.unknown,
-      this.playbackRate = PlaybackRate.normal,
-      this.playbackQuality,
-      this.errorCode = 0,
-      this.webViewController,
-      this.isDragging = false,
-      this.metaData = const YoutubeMetaData(),
-      this.toggleFullScreen = false});
+  YoutubePlayerValue({
+    this.isReady = false,
+    this.isControlsVisible = false,
+    this.hasPlayed = false,
+    this.position = const Duration(),
+    this.buffered = 0.0,
+    this.isPlaying = false,
+    this.isFullScreen = false,
+    this.volume = 100,
+    this.playerState = PlayerState.unknown,
+    this.playbackRate = PlaybackRate.normal,
+    this.playbackQuality,
+    this.errorCode = 0,
+    this.webViewController,
+    this.isDragging = false,
+    this.metaData = const YoutubeMetaData(),
+    this.toggleFullScreen = false,
+  });
 
   /// Returns true when the player is ready to play videos.
   final bool isReady;
@@ -92,24 +93,25 @@ class YoutubePlayerValue {
 
   /// Creates new [YoutubePlayerValue] with assigned parameters and overrides
   /// the old one.
-  YoutubePlayerValue copyWith(
-      {bool? isReady,
-      bool? isControlsVisible,
-      bool? isLoaded,
-      bool? hasPlayed,
-      Duration? position,
-      double? buffered,
-      bool? isPlaying,
-      bool? isFullScreen,
-      int? volume,
-      PlayerState? playerState,
-      double? playbackRate,
-      String? playbackQuality,
-      int? errorCode,
-      AdaptiveWebviewController? webViewController,
-      bool? isDragging,
-      YoutubeMetaData? metaData,
-      bool? toggleFullScreen}) {
+  YoutubePlayerValue copyWith({
+    bool? isReady,
+    bool? isControlsVisible,
+    bool? isLoaded,
+    bool? hasPlayed,
+    Duration? position,
+    double? buffered,
+    bool? isPlaying,
+    bool? isFullScreen,
+    int? volume,
+    PlayerState? playerState,
+    double? playbackRate,
+    String? playbackQuality,
+    int? errorCode,
+    InAppWebViewController? webViewController,
+    bool? isDragging,
+    YoutubeMetaData? metaData,
+    bool? toggleFullScreen,
+  }) {
     return YoutubePlayerValue(
         isReady: isReady ?? this.isReady,
         isControlsVisible: isControlsVisible ?? this.isControlsVisible,
@@ -168,7 +170,7 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
   }) : super(YoutubePlayerValue());
 
   /// Finds [YoutubePlayerController] in the provided context.
-  static YoutubePlayerController? of(BuildContext context) {
+  YoutubePlayerController? of(BuildContext context) {
     return context
         .dependOnInheritedWidgetOfExactType<InheritedYoutubePlayer>()
         ?.controller;
@@ -257,6 +259,7 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
   /// if the seconds parameter specifies a time outside of the currently buffered video data.
   /// Default allowSeekAhead = true
   void seekTo(Duration position, {bool allowSeekAhead = true}) {
+    pause();
     _callMethod('seekTo(${position.inMilliseconds / 1000},$allowSeekAhead)');
     play();
     updateValue(value.copyWith(position: position));
@@ -288,19 +291,12 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
   void toggleFullScreenMode({bool isSingleVideo = true}) {
     if (isSingleVideo) {
       updateValue(value.copyWith(isFullScreen: !value.isFullScreen));
-      if (Platform.isWindows) {
-        WindowManager.instance.setFullScreen(value.isFullScreen);
-        WindowManager.instance.setResizable(!value.isFullScreen);
-      }
       if (value.isFullScreen) {
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.landscapeLeft,
           DeviceOrientation.landscapeRight,
         ]);
       } else {
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-            overlays: SystemUiOverlay.values);
         SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
       }
     } else {

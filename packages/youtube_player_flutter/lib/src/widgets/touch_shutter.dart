@@ -118,7 +118,9 @@ class _TouchShutterState extends State<TouchShutter> {
                 seekPosition = durationFormatter(seekToPosition);
               });
             },
-            onHorizontalDragEnd: (_) {
+            onHorizontalDragEnd: (_) async {
+              _controller.pause();
+              await Future.delayed(Durations.short1);
               _controller.seekTo(Duration(milliseconds: seekToPosition));
               setState(() {
                 _dragging = false;
